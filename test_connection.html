@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LipReader API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        #loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>LipReader API Connection Test</h1>
+    
+    <div>
+        <p>Enter your backend URL (e.g., http://localhost:5000 or your ngrok URL):</p>
+        <input type="text" id="apiUrl" style="width: 100%;" value="http://localhost:5000">
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <label for="videoFile">Select a video file (.mp4):</label><br>
+        <input type="file" id="videoFile" accept="video/mp4">
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button id="testButton">Test Connection</button>
+        <span id="loading">Loading...</span>
+    </div>
+    
+    <div class="result" id="result" style="display: none;">
+        <h3>Result:</h3>
+        <div id="resultContent"></div>
+    </div>
+    
+    <script>
+        document.getElementById('testButton').addEventListener('click', async () => {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const fileInput = document.getElementById('videoFile');
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            const loading = document.getElementById('loading');
+            
+            if (!apiUrl) {
+                alert('Please enter an API URL');
+                return;
+            }
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a video file');
+                return;
+            }
+            
+            const videoFile = fileInput.files[0];
+            
+            try {
+                resultDiv.style.display = 'none';
+                loading.style.display = 'inline';
+                
+                // First test basic connectivity
+                try {
+                    const rootResponse = await fetch(`${apiUrl}/`);
+                    if (!rootResponse.ok) {
+                        throw new Error(`Root endpoint returned status ${rootResponse.status}`);
+                    }
+                } catch (error) {
+                    throw new Error(`Cannot connect to API: ${error.message}`);
+                }
+                
+                // Now test file upload
+                const formData = new FormData();
+                formData.append('file', videoFile);
+                
+                const response = await fetch(`${apiUrl}/predict`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API returned status ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                resultContent.innerHTML = `
+                    <p><strong>Connection successful!</strong></p>
+                    <p>Predicted phrase: <strong>${result.prediction}</strong></p>
+                    <p>Available options:</p>
+                    <ul>
+                        ${result.options.map(option => `<li>${option}</li>`).join('')}
+                    </ul>
+                    <p>Raw response:</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultContent.innerHTML = `
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check:</p>
+                    <ul>
+                        <li>Your Flask backend is running</li>
+                        <li>The URL is correct (including http:// or https://)</li>
+                        <li>If using ngrok, the URL is current</li>
+                        <li>CORS is properly enabled on your backend</li>
+                    </ul>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

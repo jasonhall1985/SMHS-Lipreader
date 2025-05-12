@@ -2,9 +2,11 @@ import os
 import logging
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
+from flask_cors import CORS  # Import CORS
 from model_utils import initialize_lipnet_model, predict_icu_phrase, ICU_PHRASES
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -71,4 +73,4 @@ if __name__ == '__main__':
     app.logger.info("Initializing LipNet model (placeholder)...")
     initialize_lipnet_model() # Initialize model on startup (placeholder)
     app.logger.info("Starting Flask server at http://127.0.0.1:5000")
-    app.run(host='127.0.0.1', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True) 
