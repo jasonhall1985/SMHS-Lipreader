@@ -1,0 +1,5 @@
+Flask==2.3.2
+tensorflow==2.13.0 # Or your preferred version for LipNet (e.g., PyTorch)
+opencv-python==4.7.0.72
+numpy==1.23.5
+werkzeug==2.3.7 # Ensure compatibility with Flask version 

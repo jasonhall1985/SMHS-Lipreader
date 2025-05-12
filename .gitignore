@@ -1,0 +1,46 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Development environments
+.env
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dataset files (these can be large)
+data/grid_dataset/
+
+# Temporary upload files
+uploads/*
+!uploads/.gitkeep
+
+# Training checkpoints
+.ipynb_checkpoints/ 
