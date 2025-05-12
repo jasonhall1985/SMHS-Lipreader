@@ -43,4 +43,7 @@ uploads/*
 !uploads/.gitkeep
 
 # Training checkpoints
-.ipynb_checkpoints/ 
+.ipynb_checkpoints/
+
+# Large model files
+models/lipnet_model.h5 
