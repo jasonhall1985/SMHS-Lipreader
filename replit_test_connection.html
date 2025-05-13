@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LipReader API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, select {
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        #loading {
+            display: none;
+            color: #999;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>LipReader API Connection Test</h1>
+    
+    <div class="container">
+        <h2>Configuration</h2>
+        <label for="apiUrl">Backend API URL:</label>
+        <input type="text" id="apiUrl" placeholder="https://your-ngrok-url.ngrok.app">
+        <p class="note">Enter the ngrok URL provided by your local backend</p>
+    </div>
+    
+    <div class="container">
+        <h2>Test API</h2>
+        <div>
+            <label for="videoFile">Select a video file (.mp4):</label><br>
+            <input type="file" id="videoFile" accept="video/mp4">
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button id="testRootButton">Test Root Connection</button>
+            <button id="testPredictButton">Test Predict Endpoint</button>
+            <span id="loading">Loading...</span>
+        </div>
+    </div>
+    
+    <div class="result" id="result">
+        <h3>Result:</h3>
+        <div id="resultContent"></div>
+    </div>
+    
+    <script>
+        const apiUrlInput = document.getElementById('apiUrl');
+        const videoFileInput = document.getElementById('videoFile');
+        const testRootButton = document.getElementById('testRootButton');
+        const testPredictButton = document.getElementById('testPredictButton');
+        const resultDiv = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+        const loading = document.getElementById('loading');
+        
+        // Test the root endpoint (/)
+        testRootButton.addEventListener('click', async () => {
+            const apiUrl = apiUrlInput.value.trim();
+            
+            if (!apiUrl) {
+                alert('Please enter an API URL');
+                return;
+            }
+            
+            try {
+                resultDiv.style.display = 'none';
+                loading.style.display = 'inline';
+                
+                const response = await fetch(`${apiUrl}/`);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned status ${response.status}`);
+                }
+                
+                const text = await response.text();
+                
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                resultContent.innerHTML = `
+                    <p><strong>Connection successful!</strong></p>
+                    <p>Response: ${text}</p>
+                `;
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultContent.innerHTML = `
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check:</p>
+                    <ul>
+                        <li>Your backend is running</li>
+                        <li>The URL is correct (including http:// or https://)</li>
+                        <li>CORS is properly enabled on your backend</li>
+                    </ul>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Test the predict endpoint (/predict)
+        testPredictButton.addEventListener('click', async () => {
+            const apiUrl = apiUrlInput.value.trim();
+            
+            if (!apiUrl) {
+                alert('Please enter an API URL');
+                return;
+            }
+            
+            if (!videoFileInput.files || videoFileInput.files.length === 0) {
+                alert('Please select a video file');
+                return;
+            }
+            
+            const videoFile = videoFileInput.files[0];
+            
+            try {
+                resultDiv.style.display = 'none';
+                loading.style.display = 'inline';
+                
+                const formData = new FormData();
+                formData.append('file', videoFile);
+                
+                const response = await fetch(`${apiUrl}/predict`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API returned status ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                resultContent.innerHTML = `
+                    <p><strong>Connection successful!</strong></p>
+                    <p>Predicted phrase: <strong>${result.prediction}</strong></p>
+                    <p>Available options:</p>
+                    <ul>
+                        ${result.options.map(option => `<li>${option}</li>`).join('')}
+                    </ul>
+                    <p>Raw response:</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultContent.innerHTML = `
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check:</p>
+                    <ul>
+                        <li>Your backend is running</li>
+                        <li>The URL is correct (including http:// or https://)</li>
+                        <li>CORS is properly enabled on your backend</li>
+                        <li>You've selected a valid video file</li>
+                    </ul>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
