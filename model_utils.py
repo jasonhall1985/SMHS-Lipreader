@@ -14,18 +14,11 @@ import re
 import string
 import time
 
-# Predefined ICU phrases
+# Predefined ICU phrases - reduced to just 3 critical phrases
 ICU_PHRASES = [
     "I'm in pain",
     "I need suctioning",
-    "I can't breathe",
-    "I need water",
-    "I feel sick",
-    "I need repositioning",
-    "I need the toilet",
-    "I need a blanket",
-    "Call the nurse",
-    "I need my family"
+    "I can't breathe"
 ]
 
 # Constants for video preprocessing
@@ -509,59 +502,43 @@ def parse_grid_align_file(align_path):
 def map_grid_to_icu(grid_transcript):
     """
     Map a GRID dataset transcript to one of the ICU phrases.
+    For our synthetic data, we'll recognize the folder structure.
     
     Args:
-        grid_transcript: Original GRID transcript
+        grid_transcript: Original GRID transcript or video path
         
     Returns:
-        An ICU phrase and its encoded label
+        An ICU phrase from our 3 critical phrases
     """
-    # This is a simplified mapping strategy
-    # In a full implementation, you would use a more sophisticated approach
+    # For our synthetic data, extract the phrase from the file path
+    if isinstance(grid_transcript, str) and ('im_in_pain' in grid_transcript.lower()):
+        return "I'm in pain"
+    elif isinstance(grid_transcript, str) and ('need_suctioning' in grid_transcript.lower()):
+        return "I need suctioning"
+    elif isinstance(grid_transcript, str) and ('cant_breathe' in grid_transcript.lower()):
+        return "I can't breathe"
     
-    # GRID transcripts follow a specific format: command color preposition letter digit adverb
-    # e.g., "bin blue at f two now"
+    # For regular GRID corpus data, we'll map based on words in the transcript
+    words = grid_transcript.lower().split() if isinstance(grid_transcript, str) else []
     
-    # Extract components for mapping
-    words = grid_transcript.lower().split()
-    
-    # Simplified mapping rules (just examples)
-    if len(words) >= 1:
-        command = words[0]
-        
-        # Map based on command word
-        if command in ['bin', 'place']:
-            return "I need repositioning"
-        elif command in ['set', 'lay']:
-            return "I need a blanket"
-        elif command in ['put']:
-            return "I need water"
-        elif command in ['bin', 'lay', 'place'] and 'blue' in words:
-            return "I can't breathe"
-        elif command in ['bin', 'lay', 'place'] and 'red' in words:
+    # Simplified mapping rules
+    if 'bin' in words or 'place' in words:
+        if 'red' in words:
             return "I'm in pain"
-        elif 'soon' in words or 'now' in words:
-            return "Call the nurse"
+        elif 'blue' in words:
+            return "I can't breathe"
+        else:
+            return "I need suctioning"
+    elif 'set' in words or 'lay' in words:
+        if 'green' in words:
+            return "I can't breathe"
+        else:
+            return "I'm in pain"
+    elif 'put' in words:
+        return "I need suctioning"
     
-    # If no rules match, assign randomly, weighted by importance
-    # This ensures a balanced training set
-    # In a real application, you might use a more sophisticated approach
-    weighted_phrases = [
-        "I can't breathe",
-        "I can't breathe",
-        "I'm in pain", 
-        "I'm in pain",
-        "I need suctioning",
-        "I need water",
-        "I feel sick",
-        "I need repositioning",
-        "I need the toilet",
-        "I need a blanket",
-        "Call the nurse",
-        "I need my family"
-    ]
-    
-    return random.choice(weighted_phrases)
+    # If no rules match, assign evenly across our 3 phrases
+    return ICU_PHRASES[hash(str(grid_transcript)) % len(ICU_PHRASES)]
 
 def prepare_batch(video_paths, transcripts, batch_size=4):
     """
